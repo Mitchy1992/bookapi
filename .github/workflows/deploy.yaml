@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for bookapi
+name: CI - Build & Push Docker Image
 
 on:
   push:
@@ -6,35 +6,10 @@ on:
       - main
 
 jobs:
-  build-test-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:14
-        env:
-          POSTGRES_USER: bookuser
-          POSTGRES_PASSWORD: bookpass
-          POSTGRES_DB: bookdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     env:
       DOCKER_IMAGE: mitch3192/bookapi:latest
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: bookdb
-      POSTGRES_USER: bookuser
-      POSTGRES_PASSWORD: bookpass
-      DJANGO_SECRET_KEY: dummy
-      DJANGO_DEBUG: True
-      DJANGO_HOST: 0.0.0.0
-      DJANGO_PORT: 8000
 
     steps:
       - name: ✨ Checkout Code
@@ -45,12 +20,12 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: 📦 Install Python dependencies
+      - name: ⛏ Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🧪 Run Django Tests
+      - name: ✅ Run Django Tests
         run: |
           cd bookapi
           python manage.py test
@@ -64,26 +39,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 📁 Build and Push Docker Image
+      - name: 📦 Build & Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
           push: true
           tags: ${{ env.DOCKER_IMAGE }}
-
-      - name: 🛰 Set up Kubeconfig
-        env:
-          KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
-        run: |
-          echo "$KUBECONFIG_FILE" | base64 -d > kubeconfig.yaml
-          export KUBECONFIG=$PWD/kubeconfig.yaml
-          helm upgrade --install bookapi ./bookapi-chart --namespace default
-
-      - name: ✨ Deploy to Kubernetes with Helm
-        env:
-          KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
-        run: |
-          echo "$KUBECONFIG_FILE" > kubeconfig.yaml
-          export KUBECONFIG=$PWD/kubeconfig.yaml
-          helm upgrade --install bookapi ./bookapi-chart --namespace default
