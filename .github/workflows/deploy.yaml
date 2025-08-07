@@ -73,9 +73,12 @@ jobs:
           tags: ${{ env.DOCKER_IMAGE }}
 
       - name: 🛰 Set up Kubeconfig
-        uses: azure/setup-kubectl@v3
-        with:
-          version: "latest"
+        env:
+          KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
+        run: |
+          echo "$KUBECONFIG_FILE" | base64 -d > kubeconfig.yaml
+          export KUBECONFIG=$PWD/kubeconfig.yaml
+          helm upgrade --install bookapi ./bookapi-chart --namespace default
 
       - name: ✨ Deploy to Kubernetes with Helm
         env:
