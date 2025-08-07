@@ -1,0 +1,122 @@
+---
+# Source: bookapi/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bookapi
+  labels:
+    helm.sh/chart: bookapi-0.1.0
+    app.kubernetes.io/name: bookapi
+    app.kubernetes.io/instance: bookapi
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: true
+---
+# Source: bookapi/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bookapi-secret
+type: Opaque
+stringData:
+  DJANGO_SECRET_KEY: "*oajw&w1%ke9nqoe=s96+5v(7^a--f!yf&khopfii@)ta64ik0"
+  POSTGRES_PASSWORD: "bookpass"
+---
+# Source: bookapi/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bookapi-config
+data:
+  DJANGO_DEBUG: "True"
+  DJANGO_HOST: "0.0.0.0"
+  DJANGO_PORT: "8000"
+  DJANGO_SECRET_KEY: "*oajw&w1%ke9nqoe=s96+5v(7^a--f!yf&khopfii@)ta64ik0"
+  POSTGRES_DB: "bookdb"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PASSWORD: "bookpass"
+  POSTGRES_USER: "bookuser"
+---
+# Source: bookapi/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookapi-svc
+  labels:
+    app: bookapi
+spec:
+  selector:
+    app: bookapi
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+---
+# Source: bookapi/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookapi
+  template:
+    metadata:
+      labels:
+        app: bookapi
+    spec:
+      containers:
+        - name: bookapi
+          image: "mitch3192/bookapi:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: bookapi-config
+            - secretRef:
+                name: bookapi-secret
+---
+# Source: bookapi/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookapi-ingress
+  annotations: {}
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: bookapi.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bookapi
+                port:
+                  number: 8000
+---
+# Source: bookapi/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "bookapi-test-connection"
+  labels:
+    helm.sh/chart: bookapi-0.1.0
+    app.kubernetes.io/name: bookapi
+    app.kubernetes.io/instance: bookapi
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ["wget"]
+      args: ["bookapi:8000"]
+  restartPolicy: Never

@@ -1,0 +1,14 @@
+# env
+pip
+autopep8
+
+# app
+asgiref==3.9.1
+Django==4.2.23
+djangorestframework==3.16.1
+python-decouple==3.8
+sqlparse==0.5.3
+typing_extensions==4.14.1
+
+# db
+psycopg2-binary
