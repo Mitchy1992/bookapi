@@ -3,7 +3,7 @@
 
 Hello! This is my personal project — a simple RESTful API built with Django and Django REST Framework. It manages a collection of books and supports full CRUD operations. The project is containerised with Docker, uses PostgreSQL, and includes a CI/CD pipeline with GitHub Actions for building and deploying the app automatically.
 
-[![CI/CD Pipeline](https://github.com/Mitchy1992/bookcatalog/actions/workflows/ci-cd.yaml/badge.svg)](https://github.com/Mitchy1992/bookcatalog/actions/workflows/ci-cd.yaml)
+[![CI/CD Pipeline](https://github.com/Mitchy1992/bookapi/actions/workflows/deploy.yaml/badge.svg)](https://github.com/Mitchy1992/bookcatalog/actions/workflows/ci-cd.yaml)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://github.com/Mitchy1992/bookcatalog/pkgs/container/book-catalog)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-green)](./k8s/)
 
