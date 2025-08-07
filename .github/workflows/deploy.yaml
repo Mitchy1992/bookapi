@@ -8,8 +8,33 @@ on:
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: bookuser
+          POSTGRES_PASSWORD: bookpass
+          POSTGRES_DB: bookdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     env:
       DOCKER_IMAGE: mitch3192/bookapi:latest
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: bookdb
+      POSTGRES_USER: bookuser
+      POSTGRES_PASSWORD: bookpass
+      DJANGO_SECRET_KEY: dummy
+      DJANGO_DEBUG: True
+      DJANGO_HOST: 0.0.0.0
+      DJANGO_PORT: 8000
 
     steps:
       - name: ✨ Checkout Code
@@ -20,12 +45,12 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: ⛏ Install Python dependencies
+      - name: 📦 Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: ✅ Run Django tests
+      - name: 🧪 Run Django Tests
         run: |
           cd bookapi
           python manage.py test
@@ -52,7 +77,7 @@ jobs:
         with:
           version: "latest"
 
-      - name: ✨ Deploy to Kubernetes
+      - name: ✨ Deploy to Kubernetes with Helm
         env:
           KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
         run: |
